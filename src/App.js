@@ -1,25 +1,37 @@
-import logo from './logo.svg';
-import './App.css';
+import React, {useState} from 'react';
+import {SortableContext} from "@dnd-kit/sortable";
+import {DndContext, DragOverlay} from '@dnd-kit/core';
+
+import {Draggable} from './Draggable';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const [items] = useState(['1', '2', '3', '4', '5']);
+    const [activeId, setActiveId] = useState(null);
+
+    return (
+        <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+            <SortableContext items={items}>
+                {items.map(id =>
+                    <Draggable key={id} id={id}>
+                        `Item ${id}`
+                    </Draggable>
+                )}
+            </SortableContext>
+            <DragOverlay>
+                {activeId ? (
+                    `Item ${activeId}}`
+                ): null}
+            </DragOverlay>
+        </DndContext>
+    );
+
+    function handleDragStart(event) {
+        setActiveId(event.active.id);
+    }
+
+    function handleDragEnd() {
+        setActiveId(null);
+    }
 }
 
 export default App;
