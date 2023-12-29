@@ -1,37 +1,37 @@
 import React, {useState} from 'react';
-import {SortableContext} from "@dnd-kit/sortable";
-import {DndContext, DragOverlay} from '@dnd-kit/core';
+import {DndContext, DragEndEvent} from '@dnd-kit/core';
 
-import {Draggable} from './Draggable';
+import Draggable from './Draggable';
+import Droppable from './Droppable';
 
 function App() {
-    const [items] = useState(['1', '2', '3', '4', '5']);
-    const [activeId, setActiveId] = useState(null);
+    const todosItems = ['1', '2', '3', '4', '5'];
+    const initialCartItems: string[] = [];
+    const [items, setItems] = useState(initialCartItems);
+
+    const addItemsToCart = (e: DragEndEvent) => {
+        const newItem = e.active.data.current?.title;
+        if (e.over?.id !== "cart-droppable" || !newItem) return;
+        const temp = [...items];
+        temp.push(newItem);
+        setItems(temp);
+    };
 
     return (
-        <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <SortableContext items={items}>
-                {items.map(id =>
-                    <Draggable key={id} id={id}>
-                        `Item ${id}`
-                    </Draggable>
-                )}
-            </SortableContext>
-            <DragOverlay>
-                {activeId ? (
-                    `Item ${activeId}}`
-                ): null}
-            </DragOverlay>
+        <DndContext onDragEnd={addItemsToCart}>
+            <div>
+                <ul>
+                    {todosItems.map((id) => (
+                        <Draggable key={id}>Item {id}</Draggable>
+                    ))}
+                </ul>
+            </div>
+            <div style={{ backgroundColor: "#000", width: "100%", height: "auto", padding: "30px", color: "#FFF"}}>
+                Coloque os itens abaixo:
+                <Droppable items={todosItems} />
+            </div>
         </DndContext>
-    );
-
-    function handleDragStart(event) {
-        setActiveId(event.active.id);
-    }
-
-    function handleDragEnd() {
-        setActiveId(null);
-    }
+    )
 }
 
 export default App;
