@@ -1,36 +1,37 @@
 import React, {useState} from 'react';
-import {DndContext, DragEndEvent} from '@dnd-kit/core';
+import {DndContext} from '@dnd-kit/core';
 
-import Draggable from './Draggable';
-import Droppable from './Droppable';
+import {Draggable} from './Draggable';
+import {Droppable} from './Droppable';
 
 function App() {
-    const todosItems = ['1', '2', '3', '4', '5'];
-    const initialCartItems: string[] = [];
-    const [items, setItems] = useState(initialCartItems);
+    const containers = ['ColunaA', 'ColunaB'];
+    const [parent, setParent] = useState(null);
 
-    const addItemsToCart = (e: DragEndEvent) => {
-        const newItem = e.active.data.current?.title;
-        if (e.over?.id !== "cart-droppable" || !newItem) return;
-        const temp = [...items];
-        temp.push(newItem);
-        setItems(temp);
-    };
+    const draggableMarkup = (
+        <Draggable id="draggable">Me arrasta</Draggable>
+    );
+
+    function handleDragEnd(event) {
+        const {over} = event;
+
+        setParent(over ? over.id : null);
+    }
 
     return (
-        <DndContext onDragEnd={addItemsToCart}>
-            <div>
-                <ul>
-                    {todosItems.map((id) => (
-                        <Draggable key={id}>Item {id}</Draggable>
+        <div style={{ width: "100%", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center"}}>
+            <DndContext onDragEnd={handleDragEnd}>
+                {parent === null ? draggableMarkup : null}
+
+                <div style={{ display: "flex", gap: "30px" }}>
+                    {containers.map((id) => (
+                        <Droppable key={id} id={id}>
+                            {parent === id ? draggableMarkup : 'Drop here'}
+                        </Droppable>
                     ))}
-                </ul>
-            </div>
-            <div style={{ backgroundColor: "#000", width: "100%", height: "auto", padding: "30px", color: "#FFF"}}>
-                Coloque os itens abaixo:
-                <Droppable items={todosItems} />
-            </div>
-        </DndContext>
+                </div>
+            </DndContext>
+        </div>
     )
 }
 
