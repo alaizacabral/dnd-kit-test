@@ -1,38 +1,130 @@
-import React, {useState} from 'react';
-import {DndContext} from '@dnd-kit/core';
+import React, { useState } from "react";
+import {
+    DndContext,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors
+} from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 
-import {Draggable} from './Draggable';
-import {Droppable} from './Droppable';
+import Droppable from "./Droppable";
+import { arrayMove, insertAtIndex, removeAtIndex } from "./array";
 
 function App() {
-    const containers = ['ColunaA', 'ColunaB'];
-    const [parent, setParent] = useState(null);
+    const [items, setItems] = useState({
+        group1: ["1", "2", "3"],
+        group2: ["4", "5", "6"],
+        // group3: ["7", "8", "9"],
+        // group4: ["10", "11", "12"]
+    });
 
-    const draggableMarkup = (
-        <Draggable id="draggable">Me arrasta</Draggable>
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates
+        })
     );
 
-    function handleDragEnd(event) {
-        const {over} = event;
+    const handleDragOver = ({ over, active }) => {
+        const overId = over?.id;
 
-        setParent(over ? over.id : null);
-    }
+        if (!overId) {
+            return;
+        }
+
+        const activeContainer = active.data.current.sortable.containerId;
+        const overContainer = over.data.current?.sortable.containerId;
+
+        if (!overContainer) {
+            return;
+        }
+
+        if (activeContainer !== overContainer) {
+            setItems((items) => {
+                const activeIndex = active.data.current.sortable.index;
+                const overIndex = over.data.current?.sortable.index || 0;
+
+                return moveBetweenContainers(
+                    items,
+                    activeContainer,
+                    activeIndex,
+                    overContainer,
+                    overIndex,
+                    active.id
+                );
+            });
+        }
+    };
+
+    const handleDragEnd = ({ active, over }) => {
+        if (!over) {
+            return;
+        }
+
+        if (active.id !== over.id) {
+            const activeContainer = active.data.current.sortable.containerId;
+            const overContainer = over.data.current?.sortable.containerId || over.id;
+            const activeIndex = active.data.current.sortable.index;
+            const overIndex = over.data.current?.sortable.index || 0;
+
+            setItems((items) => {
+                let newItems;
+                if (activeContainer === overContainer) {
+                    newItems = {
+                        ...items,
+                        [overContainer]: arrayMove(
+                            items[overContainer],
+                            activeIndex,
+                            overIndex
+                        )
+                    };
+                } else {
+                    newItems = moveBetweenContainers(
+                        items,
+                        activeContainer,
+                        activeIndex,
+                        overContainer,
+                        overIndex,
+                        active.id
+                    );
+                }
+
+                return newItems;
+            });
+        }
+    };
+
+    const moveBetweenContainers = (
+        items,
+        activeContainer,
+        activeIndex,
+        overContainer,
+        overIndex,
+        item
+    ) => {
+        return {
+            ...items,
+            [activeContainer]: removeAtIndex(items[activeContainer], activeIndex),
+            [overContainer]: insertAtIndex(items[overContainer], overIndex, item)
+        };
+    };
+
+    const containerStyle = { height: "100vh", width: "100%", display: "flex", gap: "16px", alignItems: "center", justifyContent: "center" };
 
     return (
-        <div style={{ width: "100%", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center"}}>
-            <DndContext onDragEnd={handleDragEnd}>
-                {parent === null ? draggableMarkup : null}
-
-                <div style={{ display: "flex", gap: "30px" }}>
-                    {containers.map((id) => (
-                        <Droppable key={id} id={id}>
-                            {parent === id ? draggableMarkup : 'Drop here'}
-                        </Droppable>
-                    ))}
-                </div>
-            </DndContext>
-        </div>
-    )
+        <DndContext
+            sensors={sensors}
+            onDragEnd={handleDragEnd}
+            onDragOver={handleDragOver}
+        >
+            <div style={containerStyle}>
+                {Object.keys(items).map((group) => (
+                    <Droppable id={group} items={items[group]} key={group} />
+                ))}
+            </div>
+        </DndContext>
+    );
 }
 
 export default App;

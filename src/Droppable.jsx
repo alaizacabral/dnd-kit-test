@@ -1,21 +1,27 @@
-import React from 'react';
-import { useDroppable} from '@dnd-kit/core';
+import { useDroppable } from "@dnd-kit/core";
+import { rectSortingStrategy, SortableContext } from "@dnd-kit/sortable";
+import SortableItem from "./SortableItem";
+import React from "react";
 
-export function Droppable(props) {
-    const {isOver, setNodeRef} = useDroppable({
-        id: props.id,
-    });
-    const style = {
-        color: isOver ? 'green' : undefined,
-        height: "300px",
-        width: "300px",
-        backgroundColor: "blue",
+const Droppable = ({ id, items }) => {
+    const { setNodeRef } = useDroppable({ id });
+
+    const droppableStyle = {
+        padding: "10px",
+        backgroundColor: "#f1f2f2",
+        borderRadius: "5px",
+        minWidth: "200px",
     };
 
-
     return (
-        <div ref={setNodeRef} style={style}>
-            {props.children}
-        </div>
+        <SortableContext id={id} items={items} strategy={rectSortingStrategy}>
+            <div ref={setNodeRef} style={droppableStyle}>
+                {items.map((item) => (
+                    <SortableItem key={item} id={item} />
+                ))}
+            </div>
+        </SortableContext>
     );
-}
+};
+
+export default Droppable;
